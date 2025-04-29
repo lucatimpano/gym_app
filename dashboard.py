@@ -18,7 +18,7 @@ st.markdown("""
 # Applichiamo un tema matplotlib più gradevole
 plt.style.use('ggplot')
 
-file_path = '/home/luca/Scrivania/Personal/Scheda_Ipertrofia_Corsa_Excel.xlsx'
+file_path = Path('Scheda_Ipertrofia_Corsa_Excel.xlsx')
 NOTE_FILE = Path('group_notes.json')
 
 # ————————————————————————————————————————————————————————————————
