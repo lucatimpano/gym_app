@@ -22,7 +22,7 @@ st.markdown("""
 plt.style.use('ggplot')
 
 # !!! IMPORTANTE: MODIFICA QUESTO PERCORSO CON QUELLO DEL TUO FILE EXCEL !!!
-EXCEL_FILE_PATH = Path('/home/luca/Scrivania/Personal/gym_app/Scheda_Ipertrofia_Corsa_Excel.xlsx')
+EXCEL_FILE_PATH = Path('Scheda_Ipertrofia_Corsa_Excel.xlsx')
 
 # Percorso per il file delle note di gruppo (JSON)
 NOTE_FILE = Path('group_notes.json')
