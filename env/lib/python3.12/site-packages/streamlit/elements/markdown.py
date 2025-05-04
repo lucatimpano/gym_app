@@ -22,7 +22,7 @@ from streamlit.string_util import clean_text, validate_icon_or_emoji
 from streamlit.type_util import SupportsStr, is_sympy_expression
 
 if TYPE_CHECKING:
-    import sympy
+    import sympy  # type: ignore
 
     from streamlit.delta_generator import DeltaGenerator
 
@@ -292,7 +292,6 @@ class MarkdownMixin:
             "violet",
             "gray",
             "grey",
-            "rainbow",
             "primary",
         ] = "blue",
     ) -> DeltaGenerator:

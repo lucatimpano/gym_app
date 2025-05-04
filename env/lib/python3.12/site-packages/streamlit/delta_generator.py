@@ -121,7 +121,7 @@ def _maybe_print_use_warning() -> None:
     """Print a warning if Streamlit is imported but not being run with `streamlit run`.
     The warning is printed only once, and is printed using the root logger.
     """
-    global _use_warning_has_been_displayed
+    global _use_warning_has_been_displayed  # noqa: PLW0603
 
     if not _use_warning_has_been_displayed:
         _use_warning_has_been_displayed = True
@@ -487,6 +487,10 @@ class DeltaGenerator(
                 cursor=new_cursor,
                 parent=dg,
             )
+
+            # Elements inherit their parent form ids.
+            # NOTE: Form ids aren't set in dg constructor.
+            output_dg._form_data = FormData(current_form_id(dg))
         else:
             # If the message was not enqueued, just return self since it's a
             # no-op from the point of view of the app.

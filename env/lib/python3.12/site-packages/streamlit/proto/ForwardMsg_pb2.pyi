@@ -107,10 +107,9 @@ class ForwardMsg(google.protobuf.message.Message):
     """A hash that uniquely identifies this ForwardMsg, for caching."""
     script_finished: global___ForwardMsg.ScriptFinishedStatus.ValueType
     ref_hash: builtins.str
-    """A reference to a ForwardMsg that has already been delivered.
-    The client should substitute the message with the given hash
-    for this one. If the client does not have the referenced message
-    in its cache, it can retrieve it from the server.
+    """A reference to a ForwardMsg that has already been delivered
+    and cached in the frontend. The client should substitute the message
+    with the given hash for this one.
     """
     debug_last_backmsg_id: builtins.str
     """The ID of the last BackMsg that we received before sending this
@@ -214,9 +213,7 @@ class ForwardMsgMetadata(google.protobuf.message.Message):
     ELEMENT_DIMENSION_SPEC_FIELD_NUMBER: builtins.int
     ACTIVE_SCRIPT_HASH_FIELD_NUMBER: builtins.int
     cacheable: builtins.bool
-    """If this is set, the server will have cached this message,
-    and a client that receives it should do the same.
-    """
+    """Marks a message as cacheable for the frontend."""
     active_script_hash: builtins.str
     """active_script_hash the forward message is associated from.
     For multipage apps v1, this will always be the page file running

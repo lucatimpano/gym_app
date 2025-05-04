@@ -36,6 +36,7 @@ class ComponentInstance(google.protobuf.message.Message):
     COMPONENT_NAME_FIELD_NUMBER: builtins.int
     URL_FIELD_NUMBER: builtins.int
     FORM_ID_FIELD_NUMBER: builtins.int
+    TAB_INDEX_FIELD_NUMBER: builtins.int
     id: builtins.str
     """The instance's "widget ID", used to uniquely identify it."""
     json_args: builtins.str
@@ -48,6 +49,7 @@ class ComponentInstance(google.protobuf.message.Message):
     that they're developing their component in.
     """
     form_id: builtins.str
+    tab_index: builtins.int
     @property
     def special_args(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___SpecialArg]:
         """Additional, non-JSON args. These require special processing
@@ -63,8 +65,11 @@ class ComponentInstance(google.protobuf.message.Message):
         component_name: builtins.str = ...,
         url: builtins.str = ...,
         form_id: builtins.str = ...,
+        tab_index: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["component_name", b"component_name", "form_id", b"form_id", "id", b"id", "json_args", b"json_args", "special_args", b"special_args", "url", b"url"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_tab_index", b"_tab_index", "tab_index", b"tab_index"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_tab_index", b"_tab_index", "component_name", b"component_name", "form_id", b"form_id", "id", b"id", "json_args", b"json_args", "special_args", b"special_args", "tab_index", b"tab_index", "url", b"url"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["_tab_index", b"_tab_index"]) -> typing.Literal["tab_index"] | None: ...
 
 global___ComponentInstance = ComponentInstance
 

@@ -25,7 +25,7 @@ from collections.abc import Sized
 from functools import wraps
 from typing import Any, Callable, Final, TypeVar, cast, overload
 
-from streamlit import config, util
+from streamlit import config, file_util, util
 from streamlit.logger import get_logger
 from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
 from streamlit.proto.PageProfile_pb2 import Argument, Command
@@ -168,7 +168,6 @@ def _get_machine_id_v3() -> str:
     - at times a hash of the same string, when running in a Docker container
     """
 
-    machine_id = str(uuid.getnode())
     if os.path.isfile(_ETC_MACHINE_ID_PATH):
         with open(_ETC_MACHINE_ID_PATH) as f:
             machine_id = f.read()
@@ -177,7 +176,40 @@ def _get_machine_id_v3() -> str:
         with open(_DBUS_MACHINE_ID_PATH) as f:
             machine_id = f.read()
 
+    else:
+        machine_id = str(uuid.getnode())
+
     return machine_id
+
+
+def _get_machine_id_v4() -> str:
+    """Get a random ID that is stable for each machine, generating if needed.
+
+    This is a unique identifier for a user for tracking metrics.
+    Instead of relying on a hardware address in the container or host we'll
+    generate a UUID and store it in the ~/.streamlit hidden folder.
+    """
+    # If gatherUsageStats is False skip this whole code.
+    # This is just for people who don't want the extra machine_id_v4 file
+    # in their file system.
+    if not config.get_option("browser.gatherUsageStats"):
+        # This value will never be sent to our telemetry. Just including it here
+        # to help debug.
+        return "no-machine-id-v4"
+
+    filepath = file_util.get_streamlit_file_path("machine_id_v4")
+    stable_id = None
+
+    if os.path.exists(filepath):
+        with file_util.streamlit_read(filepath) as input:
+            stable_id = input.read()
+
+    if not stable_id:
+        stable_id = str(uuid.uuid4())
+        with file_util.streamlit_write(filepath) as output:
+            output.write(stable_id)
+
+    return stable_id
 
 
 class Installation:
@@ -200,6 +232,8 @@ class Installation:
         self.installation_id_v3 = str(
             uuid.uuid5(uuid.NAMESPACE_DNS, _get_machine_id_v3())
         )
+
+        self.installation_id_v4 = _get_machine_id_v4()
 
     def __repr__(self) -> str:
         return util.repr_(self)
@@ -263,7 +297,7 @@ def _get_command_telemetry(
         pos = i
         if is_method:
             # If func is a method, ignore the first argument (self)
-            i = i + 1
+            i = i + 1  # noqa: PLW2901
 
         keyword = arg_keywords[i] if len(arg_keywords) > i else f"{i}"
         if keyword == "self":
@@ -460,9 +494,9 @@ def create_page_profile_message(
                 continue
 
             config_option = config._config_options[option_name]
-            if config_option.is_default:
-                option_name = f"{option_name}:default"
-            config_options.add(option_name)
+            config_options.add(
+                f"{option_name}:default" if config_option.is_default else option_name
+            )
 
     page_profile.config.extend(config_options)
 

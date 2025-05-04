@@ -17,12 +17,13 @@
 from __future__ import annotations
 
 import copy
+import logging
 import os
 import secrets
 import threading
 from collections import OrderedDict
 from enum import Enum
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Final, Literal
 
 from blinker import Signal
 
@@ -55,14 +56,16 @@ _config_options: dict[str, ConfigOption] | None = None
 
 
 # Indicates that a config option was defined by the user.
-_USER_DEFINED = "<user defined>"
+_USER_DEFINED: Final = "<user defined>"
 
 # Indicates that a config option was defined either in an environment variable
 # or via command-line flag.
-_DEFINED_BY_FLAG = "command-line argument or environment variable"
+_DEFINED_BY_FLAG: Final = "command-line argument or environment variable"
 
 # Indicates that a config option was defined in an environment variable
-_DEFINED_BY_ENV_VAR = "environment variable"
+_DEFINED_BY_ENV_VAR: Final = "environment variable"
+
+_LOGGER: Final = logging.getLogger(__name__)
 
 
 class ShowErrorDetailsConfigOptions(str, Enum):
@@ -82,8 +85,9 @@ class ShowErrorDetailsConfigOptions(str, Enum):
         return val in ["false", "False", False]
 
         # Config options can be set from several places including the command-line and
-        # the user's script. Legacy config options (true/false) will have type string when set via
-        # command-line and bool when set via user script (e.g. st.set_option("client.showErrorDetails", False)).
+        # the user's script. Legacy config options (true/false) will have type string
+        # when set via command-line and bool when set via user script
+        # (e.g. st.set_option("client.showErrorDetails", False)).
 
 
 class CustomThemeCategories(str, Enum):
@@ -162,7 +166,8 @@ def set_user_option(key: str, value: Any) -> None:
         return
 
     raise StreamlitAPIException(
-        f"{key} cannot be set on the fly. Set as command line option, e.g. streamlit run script.py --{key}, or in config.toml instead."
+        f"{key} cannot be set on the fly. Set as command line option, e.g. "
+        "streamlit run script.py --{key}, or in config.toml instead."
     )
 
 
@@ -308,8 +313,11 @@ def _create_theme_options(
     type_: type = str,
 ) -> None:
     """
-    Create ConfigOption(s) for a theme-related config option and store it globally in this module.
-    The same config option can be supported for multiple categories, e.g. "theme" and "theme.sidebar".
+    Create ConfigOption(s) for a theme-related config option and store it globally in
+    this module.
+
+    The same config option can be supported for multiple categories, e.g. "theme"
+    and "theme.sidebar".
     """
     for cat in categories:
         section = cat if cat == "theme" else f"theme.{cat.value}"
@@ -442,32 +450,6 @@ _create_option(
     visibility="hidden",
     default_val=2,
     type_=int,
-)
-
-_create_option(
-    "global.storeCachedForwardMessagesInMemory",
-    description="""
-        If True, store cached ForwardMsgs in backend memory. This is an
-        internal flag to validate a potential removal of the in-memory
-        forward message cache.
-    """,
-    visibility="hidden",
-    default_val=True,
-    type_=bool,
-)
-
-_create_option(
-    "global.includeFragmentRunsInForwardMessageCacheCount",
-    description="""
-        If True, the server will include fragment runs in the count for the
-        forward message cache. The implication is that apps with fragments may
-        see messages being removed from the cache faster. This aligns the server
-        count with the frontend count. This is a temporary fix while we assess the
-        design of the cache.
-    """,
-    visibility="hidden",
-    default_val=False,
-    type_=bool,
 )
 
 
@@ -729,7 +711,11 @@ def _server_headless() -> bool:
     Default: false unless (1) we are on a Linux box where DISPLAY is unset, or
     (2) we are running in the Streamlit Atom plugin.
     """
-    if env_util.IS_LINUX_OR_BSD and not os.getenv("DISPLAY"):
+    if (
+        env_util.IS_LINUX_OR_BSD
+        and not os.getenv("DISPLAY")
+        and not os.getenv("WAYLAND_DISPLAY")
+    ):
         # We're running in Linux and DISPLAY is unset
         return True
 
@@ -836,7 +822,9 @@ _create_option(
     description="""
         Max size, in megabytes, for files uploaded with the file_uploader.
     """,
-    default_val=200,  # If this default is changed, please also update the docstring for `DeltaGenerator.file_uploader`.
+    # If this default is changed, please also update the docstring
+    # for `DeltaGenerator.file_uploader`.
+    default_val=200,
     type_=int,
 )
 
@@ -853,8 +841,9 @@ _create_option(
 _create_option(
     "server.enableArrowTruncation",
     description="""
-        Enable automatically truncating all data structures that get serialized into Arrow (e.g. DataFrames)
-        to ensure that the size is under `server.maxMessageSize`.
+        Enable automatically truncating all data structures that get serialized
+        into Arrow (e.g. DataFrames) to ensure that the size is under
+        `server.maxMessageSize`.
     """,
     visibility="hidden",
     default_val=False,
@@ -1233,8 +1222,8 @@ _create_option(
         will take precedence over earlier ones.
     """,
     default_val=[
-        # NOTE: The order here is important! Project-level secrets should overwrite global
-        # secrets.
+        # NOTE: The order here is important! Project-level secrets should overwrite
+        # global secrets.
         file_util.get_streamlit_file_path("secrets.toml"),
         file_util.get_project_streamlit_file_path("secrets.toml"),
     ],
@@ -1370,9 +1359,18 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
         Tells the config system where this was set.
 
     """
-    import toml
+    try:
+        import toml
 
-    parsed_config_file = toml.loads(raw_toml)
+        parsed_config_file = toml.loads(raw_toml)
+    except Exception:
+        # Catching any parsing exception to prevent this from breaking our
+        # config change watcher logic.
+        _LOGGER.exception(
+            "Error parsing config toml. This is most likely due to a syntax error "
+            "in the config.toml file. Please fix it and try again.",
+        )
+        return
 
     def process_section(section_path: str, section_data: dict[str, Any]) -> None:
         """Recursively process nested sections of the config file.
@@ -1415,8 +1413,7 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
                 process_section(option_name, value)
             else:
                 # It's a regular config option, set it
-                value = _maybe_read_env_variable(value)
-                _set_option(option_name, value, where_defined)
+                _set_option(option_name, _maybe_read_env_variable(value), where_defined)
 
     for section, options in parsed_config_file.items():
         process_section(section, options)
@@ -1508,7 +1505,7 @@ def get_config_options(
     dict[str, ConfigOption]
         An ordered dict that maps config option names to their values.
     """
-    global _config_options
+    global _config_options  # noqa: PLW0603
 
     if not options_from_flags:
         options_from_flags = {}
@@ -1586,7 +1583,8 @@ def _check_conflicts() -> None:
         if not get_option("server.enableCORS") or get_option("global.developmentMode"):
             LOGGER.warning(
                 """
-Warning: the config option 'server.enableCORS=false' is not compatible with 'server.enableXsrfProtection=true'.
+Warning: the config option 'server.enableCORS=false' is not compatible with
+'server.enableXsrfProtection=true'.
 As a result, 'server.enableCORS' is being overridden to 'true'.
 
 More information:

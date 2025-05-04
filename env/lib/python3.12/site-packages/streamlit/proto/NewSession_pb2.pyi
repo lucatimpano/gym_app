@@ -454,15 +454,18 @@ class UserInfo(google.protobuf.message.Message):
 
     INSTALLATION_ID_FIELD_NUMBER: builtins.int
     INSTALLATION_ID_V3_FIELD_NUMBER: builtins.int
+    INSTALLATION_ID_V4_FIELD_NUMBER: builtins.int
     installation_id: builtins.str
     installation_id_v3: builtins.str
+    installation_id_v4: builtins.str
     def __init__(
         self,
         *,
         installation_id: builtins.str = ...,
         installation_id_v3: builtins.str = ...,
+        installation_id_v4: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["installation_id", b"installation_id", "installation_id_v3", b"installation_id_v3"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["installation_id", b"installation_id", "installation_id_v3", b"installation_id_v3", "installation_id_v4", b"installation_id_v4"]) -> None: ...
 
 global___UserInfo = UserInfo
 
@@ -482,14 +485,29 @@ class EnvironmentInfo(google.protobuf.message.Message):
 
     STREAMLIT_VERSION_FIELD_NUMBER: builtins.int
     PYTHON_VERSION_FIELD_NUMBER: builtins.int
+    SERVER_OS_FIELD_NUMBER: builtins.int
+    HAS_DISPLAY_FIELD_NUMBER: builtins.int
     streamlit_version: builtins.str
     python_version: builtins.str
+    server_os: builtins.str
+    """The name of the OS. Typically "windows", "mac", "linux",
+    but can take other values like "ios", "android", "freebsd8".
+    See https://docs.python.org/3/library/sys.html#sys.platform
+    """
+    has_display: builtins.bool
+    """True if Linux/BSD and DISPLAY or WAYLAND_DISPLAY environment variables are
+    set. This is used so we can tell when Streamlit is being executed in order
+    to develop the app (has_display = true) or to serve the app (has_display =
+    false).
+    """
     def __init__(
         self,
         *,
         streamlit_version: builtins.str = ...,
         python_version: builtins.str = ...,
+        server_os: builtins.str = ...,
+        has_display: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["python_version", b"python_version", "streamlit_version", b"streamlit_version"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["has_display", b"has_display", "python_version", b"python_version", "server_os", b"server_os", "streamlit_version", b"streamlit_version"]) -> None: ...
 
 global___EnvironmentInfo = EnvironmentInfo

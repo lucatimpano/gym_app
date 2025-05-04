@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import uuid
 from enum import Enum
@@ -24,7 +25,7 @@ from typing import TYPE_CHECKING, Callable, Final
 from google.protobuf.json_format import ParseDict
 
 import streamlit.elements.exception as exception_utils
-from streamlit import config, runtime
+from streamlit import config, env_util, runtime
 from streamlit.logger import get_logger
 from streamlit.proto.ClientState_pb2 import ClientState
 from streamlit.proto.Common_pb2 import FileURLs, FileURLsRequest
@@ -181,7 +182,7 @@ class AppSession:
 
         Files that we watch include:
           - source files that already exist (for edits)
-          - `.py` files in the the main script's `pages/` directory (for file additions
+          - `.py` files in the main script's `pages/` directory (for file additions
             and deletions)
           - project and user-level config.toml files
           - the project-level secrets.toml files
@@ -383,12 +384,13 @@ class AppSession:
                 self._client_state.context_info.CopyFrom(client_state.context_info)
 
             rerun_data = RerunData(
-                client_state.query_string,
-                client_state.widget_states,
-                client_state.page_script_hash,
-                client_state.page_name,
+                query_string=client_state.query_string,
+                widget_states=client_state.widget_states,
+                page_script_hash=client_state.page_script_hash,
+                page_name=client_state.page_name,
                 fragment_id=fragment_id if fragment_id else None,
                 is_auto_rerun=client_state.is_auto_rerun,
+                cached_message_hashes=set(client_state.cached_message_hashes),
                 context_info=client_state.context_info,
             )
         else:
@@ -607,11 +609,11 @@ class AppSession:
 
             self._clear_queue(fragment_ids_this_run)
 
-            self._enqueue_forward_msg(
-                self._create_new_session_message(
-                    page_script_hash, fragment_ids_this_run, pages
-                )
+            msg = self._create_new_session_message(
+                page_script_hash, fragment_ids_this_run, pages
             )
+
+            self._enqueue_forward_msg(msg)
 
         elif (
             event == ScriptRunnerEvent.SCRIPT_STOPPED_WITH_SUCCESS
@@ -741,6 +743,10 @@ class AppSession:
 
         imsg.environment_info.streamlit_version = STREAMLIT_VERSION_STRING
         imsg.environment_info.python_version = ".".join(map(str, sys.version_info))
+        imsg.environment_info.server_os = env_util.SYSTEM
+        imsg.environment_info.has_display = (
+            "DISPLAY" in os.environ or "WAYLAND_DISPLAY" in os.environ
+        )
 
         imsg.session_status.run_on_save = self._run_on_save
         imsg.session_status.script_is_running = (
@@ -981,5 +987,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
 
 
 def _populate_user_info_msg(msg: UserInfo) -> None:
-    msg.installation_id = Installation.instance().installation_id
-    msg.installation_id_v3 = Installation.instance().installation_id_v3
+    inst = Installation.instance()
+    msg.installation_id = inst.installation_id
+    msg.installation_id_v3 = inst.installation_id_v3
+    msg.installation_id_v4 = inst.installation_id_v4

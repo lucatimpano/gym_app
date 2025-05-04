@@ -34,6 +34,7 @@ class IFrame(google.protobuf.message.Message):
     HAS_WIDTH_FIELD_NUMBER: builtins.int
     HEIGHT_FIELD_NUMBER: builtins.int
     SCROLLING_FIELD_NUMBER: builtins.int
+    TAB_INDEX_FIELD_NUMBER: builtins.int
     src: builtins.str
     """A URL to load"""
     srcdoc: builtins.str
@@ -42,6 +43,7 @@ class IFrame(google.protobuf.message.Message):
     has_width: builtins.bool
     height: builtins.float
     scrolling: builtins.bool
+    tab_index: builtins.int
     def __init__(
         self,
         *,
@@ -51,9 +53,13 @@ class IFrame(google.protobuf.message.Message):
         has_width: builtins.bool = ...,
         height: builtins.float = ...,
         scrolling: builtins.bool = ...,
+        tab_index: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["src", b"src", "srcdoc", b"srcdoc", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["has_width", b"has_width", "height", b"height", "scrolling", b"scrolling", "src", b"src", "srcdoc", b"srcdoc", "type", b"type", "width", b"width"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_tab_index", b"_tab_index", "src", b"src", "srcdoc", b"srcdoc", "tab_index", b"tab_index", "type", b"type"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_tab_index", b"_tab_index", "has_width", b"has_width", "height", b"height", "scrolling", b"scrolling", "src", b"src", "srcdoc", b"srcdoc", "tab_index", b"tab_index", "type", b"type", "width", b"width"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_tab_index", b"_tab_index"]) -> typing.Literal["tab_index"] | None: ...
+    @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["type", b"type"]) -> typing.Literal["src", "srcdoc"] | None: ...
 
 global___IFrame = IFrame

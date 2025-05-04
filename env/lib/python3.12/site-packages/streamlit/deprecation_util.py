@@ -139,7 +139,7 @@ def deprecate_obj_name(
 
     include_st_prefix
         If False, does not prefix each of the object names in the deprecation
-        essage with `st.*`. Defaults to True.
+        message with `st.*`. Defaults to True.
     """
 
     return _create_deprecated_obj_wrapper(
@@ -188,13 +188,13 @@ def _create_deprecated_obj_wrapper(obj: TObj, show_warning: Callable[[], Any]) -
             return getattr(obj, attr)
 
         @staticmethod
-        def _get_magic_functions(cls) -> list[str]:
+        def _get_magic_functions(self_cls) -> list[str]:
             # ignore the handful of magic functions we cannot override without
             # breaking the Wrapper.
             ignore = ("__class__", "__dict__", "__getattribute__", "__getattr__")
             return [
                 name
-                for name in dir(cls)
+                for name in dir(self_cls)
                 if name not in ignore and name.startswith("__")
             ]
 
